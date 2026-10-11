@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TaskForge - a vanilla JavaScript DOM task management dashboard.">
+  <title>TaskForge — Task Management Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="TaskForge home"><span class="brand-mark">TF</span><span>TaskForge</span></a>
+    <nav class="nav-actions" aria-label="Application controls">
+      <button class="icon-btn" id="themeToggle" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">☾</button>
+      <button class="ghost-btn" id="exportBtn" type="button">Export</button><label class="ghost-btn import-label" for="importInput">Import<input id="importInput" type="file" accept="application/json" hidden></label><button class="primary-btn" id="openAddBtn" type="button">＋ New Task</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Personal productivity</p>
+        <h1>Build momentum. <span>Ship tasks.</span></h1>
+        <p class="hero-copy">Manage your work, school, personal and development goals from one focused dashboard.</p>
+      </div>
+      <div class="hero-shortcuts"><kbd>N</kbd> new task <kbd>/</kbd> search <kbd>Ctrl</kbd> + <kbd>Enter</kbd> save</div>
+    </section>
+
+    <section class="stats-grid" aria-label="Task statistics">
+      <article class="stat-card"><span>Total Tasks</span><strong id="totalCount">0</strong><small>All tasks</small></article>
+      <article class="stat-card"><span>Completed</span><strong id="completedCount">0</strong><small>Finished</small></article>
+      <article class="stat-card"><span>Pending</span><strong id="pendingCount">0</strong><small>Still active</small></article>
+      <article class="stat-card"><span>Overdue</span><strong id="overdueCount">0</strong><small>Need attention</small></article>
+    </section>
+
+    <section class="workspace">
+
+
+      <section class="task-area">
+        <div class="toolbar">
+          <label class="search-box" for="searchInput"><span>⌕</span><input id="searchInput" type="search" placeholder="Search title, description or category..." autocomplete="off"><kbd>/</kbd></label>
+          <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="false" aria-controls="filterPanel">☷ Filters <span id="activeFilterCount"></span></button>
+          <label class="sort-box">Sort
+            <select id="sortSelect">
+              <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="az">A → Z</option><option value="za">Z → A</option><option value="highPriority">Highest Priority</option><option value="lowPriority">Lowest Priority</option><option value="closestDue">Closest Due Date</option><option value="furthestDue">Furthest Due Date</option>
+            </select>
+          </label>
+        </div>
+        <div class="filter-panel" id="filterPanel" hidden>
+          <label class="compact-filter">Status
+            <select id="statusFilter"><option value="all">All statuses</option><option value="completed">Completed</option><option value="pending">Pending</option><option value="overdue">Overdue</option></select>
+          </label>
+          <label class="compact-filter">Category
+            <select id="categoryFilter"><option value="all">All categories</option><option value="work">Work</option><option value="personal">Personal</option><option value="school">School</option><option value="backend">Backend</option><option value="frontend">Frontend</option><option value="fintech">Fintech</option><option value="other">Other</option></select>
+          </label>
+          <label class="compact-filter">Priority
+            <select id="priorityFilter"><option value="all">All priorities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+          </label>
+          <button class="reset-filters" id="resetFilters" type="button">Reset filters</button>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar" hidden>
+          <label class="select-all"><input id="selectAll" type="checkbox"><span>Select all</span></label>
+          <span id="selectedCount">0 selected</span>
+          <div class="bulk-actions"><button data-bulk="complete" type="button">✓ Complete</button><button data-bulk="pending" type="button">↻ Pending</button><button class="danger-text" data-bulk="delete" type="button">Delete</button></div>
+        </div>
+
+        <div id="taskList" class="task-list" aria-live="polite"></div>
+        <div id="emptyState" class="empty-state" hidden><div class="empty-icon">✓</div><h2 id="emptyTitle">No tasks yet</h2><p id="emptyMessage">Create your first task and start building momentum.</p><button class="primary-btn" id="emptyAddBtn" type="button">Create a task</button></div>
+        <div class="pagination" id="pagination" hidden></div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal-backdrop" id="taskFormModal" hidden>
+    <section class="modal form-modal" role="dialog" aria-modal="true" aria-labelledby="formModalTitle">
+      <button class="modal-close" data-close="form" type="button" aria-label="Close">×</button>
+      <div class="modal-kicker">TASK FORGE</div><h2 id="formModalTitle">Create a new task</h2><p class="modal-subtitle">Keep the title clear and the next action obvious.</p>
+      <form id="taskForm" novalidate>
+        <input type="hidden" id="editingTaskId">
+        <div class="form-grid">
+          <div class="field full"><label for="titleInput">Title</label><input id="titleInput" name="title" type="text" maxlength="100" placeholder="e.g. Finish portfolio landing page"><small class="error" data-error="title"></small></div>
+          <div class="field full"><label for="descriptionInput">Description</label><textarea id="descriptionInput" name="description" rows="4" maxlength="500" placeholder="What needs to be done?"></textarea><small class="error" data-error="description"></small></div>
+          <div class="field"><label for="categoryInput">Category</label><select id="categoryInput" name="category"><option value="">Choose category</option><option>Work</option><option>Personal</option><option>School</option><option>Backend</option><option>Frontend</option><option>Fintech</option><option>Other</option></select><small class="error" data-error="category"></small></div>
+          <div class="field"><label for="priorityInput">Priority</label><select id="priorityInput" name="priority"><option value="">Choose priority</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select><small class="error" data-error="priority"></small></div>
+          <div class="field full"><label for="dueDateInput">Due date</label><input id="dueDateInput" name="dueDate" type="date"><small class="error" data-error="dueDate"></small></div>
+        </div>
+        <div class="form-actions"><button class="ghost-btn" data-close="form" type="button">Cancel</button><button class="primary-btn" type="submit" id="saveTaskBtn">Create task</button></div>
+      </form>
+    </section>
+  </div>
+
+  <!-- Details Modal -->
+  <div class="modal-backdrop" id="detailsModal" hidden>
+    <section class="modal details-modal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
+      <button class="modal-close" data-close="details" type="button" aria-label="Close">×</button>
+      <div id="detailsContent"></div>
+    </section>
+  </div>
+
+  <!-- Delete Modal -->
+  <div class="modal-backdrop" id="deleteModal" hidden>
+    <section class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+      <div class="confirm-icon">!</div><h2 id="deleteTitle">Delete task?</h2><p id="deleteMessage">This action cannot be undone.</p>
+      <div class="form-actions"><button class="ghost-btn" data-close="delete" type="button">Cancel</button><button class="danger-btn" id="confirmDeleteBtn" type="button">Delete task</button></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
